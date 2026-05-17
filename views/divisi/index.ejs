@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Divisi - Sistem Absensi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/dashboard">Sistem Absensi</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                    <a class="nav-link active" href="/divisi">Divisi</a>
+                    <a class="nav-link" href="/karyawan">Karyawan</a>
+                    <a class="nav-link" href="/absensi">Absensi</a>
+                    <a class="nav-link" href="/cuti">Cuti</a>
+                    <a class="nav-link text-danger fw-bold" href="/logout" onclick="return confirm('Apakah Anda yakin ingin logout?')">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Data Divisi / Departemen</h2>
+            <a href="/dashboard" class="btn btn-secondary shadow-sm">Kembali ke Dashboard</a>
+        </div>
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body bg-white rounded">
+                <h5 class="card-title fw-bold mb-3" style="font-size: 1rem; color: #6c757d;">+ Tambah Divisi Baru</h5>
+                <form action="/divisi/add" method="POST" class="row g-2">
+                    <div class="col-md-3">
+                        <input type="text" name="kode" class="form-control" placeholder="Kode Divisi (Contoh: IT, HRD)" required>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" name="nama_divisi" class="form-control" placeholder="Nama Divisi" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" name="kepala_divisi" class="form-control" placeholder="Nama Kepala Divisi" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-success w-100 shadow-sm">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <table class="table table-hover table-striped mb-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 20%;">Kode Divisi</th>
+                            <th style="width: 35%;">Nama Divisi</th>
+                            <th style="width: 25%;">Kepala Divisi</th>
+                            <th style="width: 20%;" class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if(data.length === 0) { %>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Belum ada data divisi. Silakan tambah data di atas.</td>
+                            </tr>
+                        <% } else { %>
+                            <% data.forEach(item => { %>
+                            <tr>
+                                <td><span class="badge bg-dark fw-bold"><%= item.kode %></span></td>
+                                <td class="fw-semibold"><%= item.nama_divisi %></td>
+                                <td><%= item.kepala_divisi || '-' %></td>
+                                <td class="text-center">
+                                    <button class="btn btn-warning btn-sm shadow-sm me-1" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editDivisiModal"
+                                            data-id="<%= item._id %>"
+                                            data-kode="<%= item.kode %>"
+                                            data-nama="<%= item.nama_divisi %>"
+                                            data-kepala="<%= item.kepala_divisi %>">Edit</button>
+
+                                    <a href="/divisi/delete/<%= item._id %>" class="btn btn-danger btn-sm shadow-sm" onclick="return confirm('Menghapus divisi ini akan berdampak pada relasi data karyawan. Anda yakin ingin menghapus divisi <%= item.nama_divisi %>?')">Hapus</a>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editDivisiModal" tabindex="-1" aria-labelledby="editDivisiModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="editDivisiForm" method="POST">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="editDivisiModalLabel">Edit Data Divisi</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Kode Divisi</label>
+                            <input type="text" name="kode" id="ed_kode" class="form-control" placeholder="Contoh: IT, HRD" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Nama Divisi</label>
+                            <input type="text" name="nama_divisi" id="ed_nama" class="form-control" placeholder="Nama Divisi" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-muted">Kepala Divisi</label>
+                            <input type="text" name="kepala_divisi" id="ed_kepala" class="form-control" placeholder="Nama Kepala Divisi" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const editDivisiModal = document.getElementById('editDivisiModal');
+        if (editDivisiModal) {
+            editDivisiModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget;
+                
+                // Ambil data dari atribut data-bs-* button
+                const id = button.getAttribute('data-id');
+                const kode = button.getAttribute('data-kode');
+                const nama = button.getAttribute('data-nama');
+                const kepala = button.getAttribute('data-kepala');
+                
+                // Isi nilai ke dalam input form modal secara otomatis
+                document.getElementById('editDivisiForm').action = `/divisi/edit/${id}`;
+                document.getElementById('ed_kode').value = kode;
+                document.getElementById('ed_nama').value = nama;
+                document.getElementById('ed_kepala').value = kepala;
+            });
+        }
+    </script>
+</body>
+</html>
