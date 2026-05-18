@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const path = require('path'); // Tambahan untuk mengatur path folder
+const path = require('path');
 
 const app = express();
 
@@ -13,9 +13,9 @@ const app = express();
 
 // Set View Engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views')); // Memastikan folder views terbaca dengan benar
+app.set('views', path.join(__dirname, 'views'));
 
-// Serve Static Files (buat CSS, Gambar, atau JS frontend nanti)
+// Serve Static Files
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Body Parser Middleware
@@ -24,14 +24,14 @@ app.use(bodyParser.json());
 
 // Session Configuration
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'secret-key', // Sebaiknya simpan secret di .env juga
+    secret: process.env.SESSION_SECRET || 'secret-key',
     resave: false,
     saveUninitialized: true,
     cookie: { maxAge: 1000 * 60 * 60 * 24 } // Sesi berlaku 1 hari
 }));
 
 // =========================================================================
-// 2. DATABASE CONNECTION (Menggunakan variabel dari .env)
+// 2. DATABASE CONNECTION (Hanya Menggunakan MongoDB Atlas Cloud)
 // =========================================================================
 const dbURI = process.env.MONGO_URI;
 
@@ -39,10 +39,8 @@ mongoose.connect(dbURI)
     .then(() => console.log('Koneksi ke MongoDB Atlas Berhasil!'))
     .catch((err) => console.error('Gagal Koneksi Database:', err));
 
-
-
 // =========================================================================
-// 2. IMPORT MODELS
+// 3. IMPORT MODELS
 // =========================================================================
 const Karyawan = require('./models/Karyawan');
 const Divisi = require('./models/Divisi');
@@ -50,45 +48,91 @@ const Absensi = require('./models/Absensi');
 const Cuti = require('./models/Cuti');
 
 // =========================================================================
-// 3. KONEKSI MONGODB
-// =========================================================================
-mongoose.connect('mongodb://127.0.0.1:27017/absensi_karyawan')
-    .then(() => console.log('Terhubung ke MongoDB (absensi_karyawan)'))
-    .catch(err => console.error('Koneksi Gagal:', err));
-
-// =========================================================================
-// 4. SISTEM LOGIN & AUTHENTICATION
+// 4. SISTEM LOGIN & AUTHENTICATION (Menggunakan NIP & Session)
 // =========================================================================
 const auth = (req, res, next) => {
-    if (req.session.isLoggedIn) return next();
+    if (req.session && req.session.isLoggedIn) {
+        return next();
+    }
     res.redirect('/');
 };
 
-app.get('/', (req, res) => res.render('login'));
+// Halaman utama (Menampilkan Form Login)
+app.get('/', (req, res) => {
+    res.render('login', { error: null }); // Set default error null agar tidak crash
+});
 
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    if (username === 'admin' && password === 'admin') {
-        req.session.isLoggedIn = true;
-        res.redirect('/dashboard');
-    } else {
-        res.send('Login Gagal. <a href="/">Kembali</a>');
+// Proses Login Mencocokkan Data ke MongoDB Atlas
+app.post('/login', async (req, res) => {
+    try {
+        const { nip, password } = req.body;
+
+        // Validasi Hardcode Cadangan untuk Admin Utama, atau cari ke database Karyawan
+        if (nip === 'admin' && password === 'admin') {
+            req.session.isLoggedIn = true;
+            req.session.user = { nama_lengkap: 'Super Admin', jabatan: 'HRD' };
+            return req.session.save(() => res.redirect('/dashboard'));
+        }
+
+        // Cari berdasarkan NIP dan Password di MongoDB Atlas
+        const user = await Karyawan.findOne({ nip, password });
+        
+        if (user) {
+            req.session.isLoggedIn = true;
+            req.session.user = user;
+            req.session.save(() => res.redirect('/dashboard'));
+        } else {
+            res.render('login', { error: 'NIP atau Password salah!' });
+        }
+    } catch (err) {
+        console.error(err);
+        res.render('login', { error: 'Terjadi kesalahan sistem login.' });
     }
 });
 
 app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/');
+    req.session.destroy(() => {
+        res.redirect('/');
+    });
 });
 
-app.get('/dashboard', auth, (req, res) => res.render('dashboard'));
+// SESUAIKAN: Menghitung total data untuk widget statistik di dashboard.ejs
+app.get('/dashboard', auth, async (req, res) => {
+    try {
+        const countDivisi = await Divisi.countDocuments();
+        const countKaryawan = await Karyawan.countDocuments();
+        const countAbsensi = await Absensi.countDocuments();
+        const countCuti = await Cuti.countDocuments();
+
+        res.render('dashboard', { 
+            user: req.session.user,
+            countDivisi,
+            countKaryawan,
+            countAbsensi,
+            countCuti
+        });
+    } catch (err) {
+        console.error(err);
+        res.render('dashboard', { 
+            user: req.session.user,
+            countDivisi: 0,
+            countKaryawan: 0,
+            countAbsensi: 0,
+            countCuti: 0
+        });
+    }
+});
 
 // =========================================================================
-// 5. CRUD DIVISI (Langsung di app.js)
+// 5. CRUD DIVISI
 // =========================================================================
 app.get('/divisi', auth, async (req, res) => {
-    const data = await Divisi.find();
-    res.render('divisi/index', { data });
+    try {
+        const data = await Divisi.find();
+        res.render('divisi/index', { data, user: req.session.user });
+    } catch (err) {
+        res.send('Gagal memuat halaman divisi: ' + err.message);
+    }
 });
 
 app.post('/divisi/add', auth, async (req, res) => {
@@ -100,7 +144,6 @@ app.post('/divisi/add', auth, async (req, res) => {
     }
 });
 
-// Menangani Update Data dari Modal Edit Divisi
 app.post('/divisi/edit/:id', auth, async (req, res) => {
     try {
         const { id } = req.params;
@@ -130,10 +173,15 @@ app.get('/divisi/delete/:id', auth, async (req, res) => {
 // =========================================================================
 // 6. CRUD KARYAWAN
 // =========================================================================
+// SESUAIKAN: Mengubah nama variabel data dari 'divisi' menjadi 'divisiData' agar cocok dengan karyawan/index.ejs
 app.get('/karyawan', auth, async (req, res) => {
-    const data = await Karyawan.find().populate('departmentId');
-    const divisi = await Divisi.find(); 
-    res.render('karyawan/index', { data, divisi });
+    try {
+        const data = await Karyawan.find().populate('departmentId');
+        const divisiData = await Divisi.find(); 
+        res.render('karyawan/index', { data, divisiData, user: req.session.user });
+    } catch (err) {
+        res.send('Gagal memuat halaman karyawan: ' + err.message);
+    }
 });
 
 app.post('/karyawan/add', auth, async (req, res) => {
@@ -175,9 +223,13 @@ app.get('/karyawan/delete/:id', auth, async (req, res) => {
 // 7. CRUD ABSENSI
 // =========================================================================
 app.get('/absensi', auth, async (req, res) => {
-    const data = await Absensi.find().populate('id_karyawan');
-    const karyawan = await Karyawan.find(); 
-    res.render('absensi/index', { data, karyawan });
+    try {
+        const data = await Absensi.find().populate('id_karyawan');
+        const karyawan = await Karyawan.find(); 
+        res.render('absensi/index', { data, karyawan, user: req.session.user });
+    } catch (err) {
+        res.send('Gagal memuat halaman absensi: ' + err.message);
+    }
 });
 
 app.post('/absensi/add', auth, async (req, res) => {
@@ -211,8 +263,12 @@ app.get('/absensi/delete/:id', auth, async (req, res) => {
 // 8. CRUD CUTI
 // =========================================================================
 app.get('/cuti', auth, async (req, res) => {
-    const data = await Cuti.find();
-    res.render('cuti/index', { data });
+    try {
+        const data = await Cuti.find();
+        res.render('cuti/index', { data, user: req.session.user });
+    } catch (err) {
+        res.send('Gagal memuat halaman cuti: ' + err.message);
+    }
 });
 
 app.post('/cuti/add', auth, async (req, res) => {
@@ -226,7 +282,7 @@ app.post('/cuti/add', auth, async (req, res) => {
 
 app.post('/cuti/edit/:id', auth, async (req, res) => {
     try {
-        await Cuti.findByIdAndUpdate(req.params.id, req.body);
+        await Cuti.create(req.body);
         res.redirect('/cuti');
     } catch (err) {
         res.send('Gagal update cuti: ' + err.message);
@@ -242,9 +298,10 @@ app.get('/cuti/delete/:id', auth, async (req, res) => {
     }
 });
 
-// Gunakan port dari sistem hosting, atau 3000 jika dijalankan di laptop sendiri
+// =========================================================================
+// RUN SERVER
+// =========================================================================
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
     console.log(`Server sedang berjalan di port ${PORT}`);
 });

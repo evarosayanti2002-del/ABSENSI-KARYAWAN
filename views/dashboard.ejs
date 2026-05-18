@@ -27,7 +27,7 @@
         </div>
     </nav>
 
-    <div class="container mt-5">
+    <div class="container mt-5 mb-5">
         <div class="row">
             <div class="col-md-12 text-center mb-4">
                 <h1 class="display-5 fw-bold">Selamat Datang di Dashboard Admin</h1>
@@ -36,40 +36,83 @@
             </div>
         </div>
 
-        <div class="row g-4 justify-content-center mt-2">
+        <div class="row g-4 mb-5">
             <div class="col-md-3">
-                <div class="card h-100 text-center shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">Data Divisi</h5>
-                        <p class="card-text text-muted small">Kelola kode dan nama struktur departemen.</p>
-                        <a href="/divisi" class="btn btn-outline-dark btn-sm w-100">Buka Menu</a>
+                <div class="card bg-dark text-white border-0 shadow-sm rounded">
+                    <div class="card-body p-4">
+                        <h6 class="text-uppercase small text-muted">Total Divisi</h6>
+                        <h2 class="display-6 fw-bold m-0"><%= typeof countDivisi !== 'undefined' ? countDivisi : 0 %></h2>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card h-100 text-center shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">Data Karyawan</h5>
-                        <p class="card-text text-muted small">Kelola biodata, jabatan, dan status staf.</p>
-                        <a href="/karyawan" class="btn btn-outline-dark btn-sm w-100">Buka Menu</a>
+                <div class="card bg-primary text-white border-0 shadow-sm rounded">
+                    <div class="card-body p-4">
+                        <h6 class="text-uppercase small text-light opacity-75">Total Karyawan</h6>
+                        <h2 class="display-6 fw-bold m-0"><%= typeof countKaryawan !== 'undefined' ? countKaryawan : 0 %></h2>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card h-100 text-center shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">Presensi Harian</h5>
-                        <p class="card-text text-muted small">Catat dan pantau jam masuk karyawan.</p>
-                        <a href="/absensi" class="btn btn-outline-dark btn-sm w-100">Buka Menu</a>
+                <div class="card bg-success text-white border-0 shadow-sm rounded">
+                    <div class="card-body p-4">
+                        <h6 class="text-uppercase small text-light opacity-75">Absen Hari Ini</h6>
+                        <h2 class="display-6 fw-bold m-0"><%= typeof countAbsensi !== 'undefined' ? countAbsensi : 0 %></h2>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card h-100 text-center shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="card-title fw-bold">Manajemen Cuti</h5>
-                        <p class="card-text text-muted small">Verifikasi tanggal & status libur karyawan.</p>
-                        <a href="/cuti" class="btn btn-outline-dark btn-sm w-100">Buka Menu</a>
+                <div class="card bg-warning text-dark border-0 shadow-sm rounded">
+                    <div class="card-body p-4">
+                        <h6 class="text-uppercase small text-muted">Pengajuan Cuti</h6>
+                        <h2 class="display-6 fw-bold m-0"><%= typeof countCuti !== 'undefined' ? countCuti : 0 %></h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-3">
+                <div class="card h-100 text-center shadow-sm border-0 transition-card">
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title fw-bold mb-2">Data Divisi</h5>
+                            <p class="card-text text-muted small mb-4">Kelola kode dan nama struktur departemen.</p>
+                        </div>
+                        <a href="/divisi" class="btn btn-outline-dark btn-sm w-100 shadow-sm">Buka Menu</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 text-center shadow-sm border-0 transition-card">
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title fw-bold mb-2">Data Karyawan</h5>
+                            <p class="card-text text-muted small mb-4">Kelola biodata, jabatan, dan status staf.</p>
+                        </div>
+                        <a href="/karyawan" class="btn btn-outline-dark btn-sm w-100 shadow-sm">Buka Menu</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 text-center shadow-sm border-0 transition-card">
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title fw-bold mb-2">Presensi Harian</h5>
+                            <p class="card-text text-muted small mb-4">Catat dan pantau jam masuk karyawan.</p>
+                        </div>
+                        <a href="/absensi" class="btn btn-outline-dark btn-sm w-100 shadow-sm">Buka Menu</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 text-center shadow-sm border-0 transition-card">
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <h5 class="card-title fw-bold mb-2">Manajemen Cuti</h5>
+                            <p class="card-text text-muted small mb-4">Verifikasi tanggal & status libur karyawan.</p>
+                        </div>
+                        <a href="/cuti" class="btn btn-outline-dark btn-sm w-100 shadow-sm">Buka Menu</a>
                     </div>
                 </div>
             </div>
